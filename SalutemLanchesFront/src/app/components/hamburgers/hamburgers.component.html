@@ -96,7 +96,7 @@
         <!-- Seleção de Ingredientes (sem pães) -->
         <div class="mt-4">
           <label class="form-label fw-bold">
-            Ingredientes Adicionais
+            Ingredientes
             <span class="badge bg-secondary ms-2">
               {{ hamburger.ingredientes.length - (hamburger.paoSelecionado ? 1 : 0) }}
               selecionado(s)
@@ -105,26 +105,23 @@
           <div class="row">
             <div class="col-md-8">
               <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto">
-                <div *ngFor="let ingrediente of ingredientes" class="form-check">
-                  <input
-                    *ngIf="!isPao(ingrediente)"
-                    class="form-check-input"
-                    type="checkbox"
-                    [id]="'ingrediente-' + ingrediente.id"
-                    [checked]="isIngredienteSelecionado(ingrediente)"
-                    (change)="toggleIngrediente(ingrediente)"
-                  />
-                  <label
-                    *ngIf="!isPao(ingrediente)"
-                    class="form-check-label"
-                    [for]="'ingrediente-' + ingrediente.id"
-                  >
-                    {{ ingrediente.descricao }}
-                    <small class="text-success"
-                      >(R$ {{ ingrediente.precoUnitario.toFixed(2) }})</small
-                    >
-                  </label>
-                </div>
+                <ng-container *ngFor="let ingrediente of ingredientes">
+                  <div *ngIf="!isPao(ingrediente)" class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      [id]="'ingrediente-' + ingrediente.id"
+                      [checked]="isIngredienteSelecionado(ingrediente)"
+                      (change)="toggleIngrediente(ingrediente)"
+                    />
+                    <label class="form-check-label" [for]="'ingrediente-' + ingrediente.id">
+                      {{ ingrediente.descricao }}
+                      <small class="text-success"
+                        >(R$ {{ ingrediente.precoUnitario.toFixed(2) }})</small
+                      >
+                    </label>
+                  </div>
+                </ng-container>
                 <div *ngIf="ingredientes.length === 0" class="text-muted">
                   <small>Nenhum ingrediente cadastrado.</small>
                 </div>
