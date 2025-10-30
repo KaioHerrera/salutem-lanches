@@ -1,0 +1,461 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Gerenciamento de Pedidos</h2>
+  </div>
+
+  <!-- Formulário de Pedido -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-info text-white">
+      <h5 class="mb-0">
+        <i class="bi bi-plus-circle me-2"></i>
+        Novo Pedido
+      </h5>
+    </div>
+    <div class="card-body">
+      <form (ngSubmit)="salvarPedido()" #pedidoForm="ngForm">
+        <!-- Dados Básicos do Pedido -->
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label fw-bold">Código do Pedido</label>
+            <input
+              type="text"
+              class="form-control bg-light"
+              [value]="pedido.codigo"
+              readonly
+              style="cursor: not-allowed"
+            />
+            <small class="text-muted">Gerado automaticamente</small>
+          </div>
+
+          <div class="col-md-9">
+            <label class="form-label fw-bold">Descrição do Pedido</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="pedido.descricao"
+              name="descricao"
+              placeholder="Ex: Pedido para entrega"
+            />
+          </div>
+        </div>
+
+        <!-- Dados do Cliente -->
+        <div class="row g-3 mt-2">
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Nome do Cliente *</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="pedido.nomeCliente"
+              name="nomeCliente"
+              required
+              placeholder="Nome completo"
+            />
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Telefone *</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="pedido.telefoneCliente"
+              name="telefoneCliente"
+              required
+              placeholder="(11) 99999-9999"
+              maxlength="15"
+              (input)="formatarTelefone($event)"
+            />
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Endereço *</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="pedido.enderecoCliente"
+              name="enderecoCliente"
+              required
+              placeholder="Endereço completo"
+            />
+          </div>
+        </div>
+
+        <!-- Seleção de Hamburgers -->
+        <div class="mt-4">
+          <label class="form-label fw-bold">
+            Hamburgers
+            <span class="badge bg-warning ms-2">{{ pedido.hamburgers.length }}</span>
+          </label>
+          <div class="row">
+            <div class="col-md-6">
+              <select
+                class="form-select"
+                [(ngModel)]="hamburgerSelecionadoId"
+                name="hamburgerSelecionado"
+              >
+                <option value="">Selecione um hamburger...</option>
+                <option *ngFor="let hamburger of hamburgers" [value]="hamburger.id">
+                  {{ hamburger.descricao }} - R$ {{ hamburger.valor.toFixed(2) }}
+                </option>
+              </select>
+              <button
+                type="button"
+                class="btn btn-outline-warning btn-sm mt-2"
+                (click)="adicionarHamburger()"
+                [disabled]="!hamburgerSelecionadoId"
+              >
+                <i class="bi bi-plus-circle me-1"></i>
+                Adicionar Hamburger
+              </button>
+            </div>
+
+            <div class="col-md-6">
+              <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto">
+                <div
+                  *ngFor="let hamburger of pedido.hamburgers; let i = index"
+                  class="mb-2 p-2 border-bottom"
+                >
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div>
+                      <strong>{{ hamburger.descricao }}</strong>
+                      <br />
+                      <small class="text-muted">R$ {{ hamburger.valor.toFixed(2) }}</small>
+                    </div>
+                    <button
+                      type="button"
+                      class="btn btn-outline-danger btn-sm"
+                      (click)="removerHamburger(i)"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+
+                  <!-- Adicionais para este hamburger -->
+                  <div class="mt-1">
+                    <small class="fw-bold">Adicionais:</small>
+                    <select
+                      class="form-select form-select-sm mt-1"
+                      (change)="adicionarAdicional(i, $event)"
+                    >
+                      <option value="">Adicionar ingrediente...</option>
+                      <option
+                        *ngFor="let adicional of ingredientesAdicionais"
+                        [value]="adicional.id"
+                      >
+                        {{ adicional.descricao }} (+R$ {{ adicional.precoUnitario.toFixed(2) }})
+                      </option>
+                    </select>
+
+                    <div *ngIf="getAdicionais(i).length > 0" class="mt-1">
+                      <div
+                        *ngFor="let adicional of getAdicionais(i); let j = index"
+                        class="d-flex justify-content-between align-items-center small"
+                      >
+                        <span>+ {{ adicional.descricao }}</span>
+                        <span class="text-success"
+                          >R$ {{ adicional.precoUnitario.toFixed(2) }}</span
+                        >
+                        <button
+                          type="button"
+                          class="btn btn-outline-danger btn-xs"
+                          (click)="removerAdicional(i, j)"
+                        >
+                          <i class="bi bi-x"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div *ngIf="pedido.hamburgers.length === 0" class="text-muted text-center py-2">
+                  <small>Nenhum hamburger adicionado</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Seleção de Bebidas -->
+        <div class="mt-4">
+          <label class="form-label fw-bold">
+            Bebidas
+            <span class="badge bg-primary ms-2">{{ pedido.bebidas.length }}</span>
+          </label>
+          <div class="row">
+            <div class="col-md-6">
+              <select
+                class="form-select"
+                [(ngModel)]="bebidaSelecionadaId"
+                name="bebidaSelecionada"
+              >
+                <option value="">Selecione uma bebida...</option>
+                <option *ngFor="let bebida of bebidas" [value]="bebida.id">
+                  {{ bebida.descricao }} - R$ {{ bebida.precoUnitario.toFixed(2) }}
+                </option>
+              </select>
+              <button
+                type="button"
+                class="btn btn-outline-primary btn-sm mt-2"
+                (click)="adicionarBebida()"
+                [disabled]="!bebidaSelecionadaId"
+              >
+                <i class="bi bi-plus-circle me-1"></i>
+                Adicionar Bebida
+              </button>
+            </div>
+
+            <div class="col-md-6">
+              <div class="border rounded p-2" style="max-height: 150px; overflow-y: auto">
+                <div
+                  *ngFor="let bebida of pedido.bebidas; let i = index"
+                  class="d-flex justify-content-between align-items-center mb-2 p-2 border-bottom"
+                >
+                  <div>
+                    <strong>{{ bebida.descricao }}</strong>
+                    <br />
+                    <small class="text-muted">R$ {{ bebida.precoUnitario.toFixed(2) }}</small>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-outline-danger btn-sm"
+                    (click)="removerBebida(i)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+                <div *ngIf="pedido.bebidas.length === 0" class="text-muted text-center py-2">
+                  <small>Nenhuma bebida adicionada</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Observações -->
+        <div class="mt-4">
+          <label class="form-label fw-bold">Observações</label>
+          <div class="row">
+            <div class="col-md-8">
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="novaObservacao"
+                  placeholder="Ex: Sem cebola, entregar após as 18h..."
+                  name="novaObservacao"
+                />
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="adicionarObservacao()"
+                  [disabled]="!novaObservacao.trim()"
+                >
+                  <i class="bi bi-plus-circle me-1"></i>
+                  Adicionar
+                </button>
+              </div>
+
+              <div class="mt-2">
+                <div
+                  *ngFor="let observacao of pedido.observacoes; let i = index"
+                  class="d-flex justify-content-between align-items-center mb-1 p-2 border rounded"
+                >
+                  <span>{{ observacao }}</span>
+                  <button
+                    type="button"
+                    class="btn btn-outline-danger btn-sm"
+                    (click)="removerObservacao(i)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resumo do Pedido -->
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-header bg-light">
+                  <strong>Resumo do Pedido</strong>
+                </div>
+                <div class="card-body" style="max-height: 300px; overflow-y: auto">
+                  <!-- Hamburgers com adicionais -->
+                  <div *ngFor="let hamburger of pedido.hamburgers; let i = index" class="mb-2">
+                    <div class="d-flex justify-content-between">
+                      <span
+                        ><strong>{{ hamburger.descricao }}</strong></span
+                      >
+                      <span>R$ {{ hamburger.valor.toFixed(2) }}</span>
+                    </div>
+                    <div
+                      *ngFor="let adicional of getAdicionais(i)"
+                      class="d-flex justify-content-between small ms-2"
+                    >
+                      <span>+ {{ adicional.descricao }}</span>
+                      <span class="text-success">R$ {{ adicional.precoUnitario.toFixed(2) }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Bebidas -->
+                  <div *ngFor="let bebida of pedido.bebidas" class="d-flex justify-content-between">
+                    <span
+                      ><strong>{{ bebida.descricao }}</strong></span
+                    >
+                    <span>R$ {{ bebida.precoUnitario.toFixed(2) }}</span>
+                  </div>
+
+                  <div
+                    *ngIf="pedido.hamburgers.length === 0 && pedido.bebidas.length === 0"
+                    class="text-muted text-center"
+                  >
+                    <small>Nenhum item adicionado</small>
+                  </div>
+
+                  <hr />
+                  <div class="d-flex justify-content-between fw-bold fs-5">
+                    <span>TOTAL:</span>
+                    <span class="text-success">R$ {{ calcularTotalPedido().toFixed(2) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botão Finalizar Pedido -->
+        <div class="mt-4">
+          <button
+            type="submit"
+            class="btn btn-success me-2"
+            [disabled]="
+              !pedidoForm.form.valid ||
+              (pedido.hamburgers.length === 0 && pedido.bebidas.length === 0)
+            "
+          >
+            <i class="bi bi-check-circle me-1"></i>
+            Finalizar Pedido
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="limparFormulario()">
+            <i class="bi bi-x-circle me-1"></i>
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Pesquisa -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Pesquisar Pedidos</label>
+          <div class="input-group">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Digite código ou nome do cliente..."
+              [(ngModel)]="termoPesquisa"
+            />
+            <button
+              class="btn btn-outline-info"
+              (click)="pesquisarPedidos()"
+              [disabled]="!termoPesquisa.trim()"
+            >
+              <i class="bi bi-search me-1"></i>
+              Pesquisar
+            </button>
+            <button class="btn btn-outline-secondary" (click)="carregarPedidos()">
+              <i class="bi bi-list-ul me-1"></i>
+              Todos
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de Pedidos -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">
+        <i class="bi bi-list-check me-2"></i>
+        Lista de Pedidos
+        <span class="badge bg-info ms-2">{{ pedidos.length }}</span>
+      </h5>
+    </div>
+    <div class="card-body">
+      <div *ngIf="pedidos.length === 0" class="text-center py-4">
+        <div class="text-muted">
+          <i class="bi bi-cart fs-1"></i>
+          <p class="mt-2">Nenhum pedido cadastrado</p>
+          <small>Use o formulário acima para criar o primeiro pedido</small>
+        </div>
+      </div>
+
+      <div *ngIf="pedidos.length > 0" class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-dark">
+            <tr>
+              <th>Código</th>
+              <th>Cliente</th>
+              <th>Data</th>
+              <th>Itens</th>
+              <th>Total</th>
+              <th width="120">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let pedido of pedidos">
+              <td class="fw-bold">{{ pedido.codigo }}</td>
+              <td>
+                <div>
+                  <strong>{{ pedido.nomeCliente }}</strong>
+                  <br />
+                  <small class="text-muted">{{ pedido.telefoneCliente }}</small>
+                </div>
+              </td>
+              <td>
+                <small>{{ pedido.dataPedido | date : 'dd/MM/yyyy HH:mm' }}</small>
+              </td>
+              <td>
+                <small>
+                  <!-- Hamburgers -->
+                  <div *ngFor="let hamburger of pedido.hamburgers">
+                    <strong>{{ hamburger.descricao }}</strong>
+                  </div>
+
+                  <!-- Bebidas -->
+                  <div *ngFor="let bebida of pedido.bebidas">
+                    <strong>{{ bebida.descricao }}</strong>
+                  </div>
+
+                  <!-- Observações -->
+                  <div *ngIf="pedido.observacoes.length > 0" class="mt-1">
+                    <small class="text-muted">
+                      <strong>Obs:</strong>
+                      <span *ngFor="let obs of pedido.observacoes; let last = last">
+                        {{ obs }}{{ !last ? '; ' : '' }}
+                      </span>
+                    </small>
+                  </div>
+                </small>
+              </td>
+              <td class="fw-bold text-success">
+                R$ {{ calcularTotalPedidoItem(pedido).toFixed(2) }}
+              </td>
+              <td>
+                <button
+                  class="btn btn-outline-danger btn-sm"
+                  (click)="excluirPedido(pedido.id!)"
+                  title="Excluir"
+                >
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

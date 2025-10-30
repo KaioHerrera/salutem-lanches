@@ -1,0 +1,179 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Gerenciamento de Bebidas</h2>
+  </div>
+
+  <!-- Formulário -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">{{ modoEdicao ? 'Editar Bebida' : 'Nova Bebida' }}</h5>
+    </div>
+    <div class="card-body">
+      <form (ngSubmit)="salvarBebida()" #bebidaForm="ngForm">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label fw-bold">Código</label>
+            <input
+              type="text"
+              class="form-control bg-light"
+              [value]="bebida.codigo"
+              readonly
+              style="cursor: not-allowed"
+            />
+            <small class="text-muted">Gerado automaticamente</small>
+          </div>
+
+          <div class="col-md-5">
+            <label class="form-label fw-bold">Descrição *</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="bebida.descricao"
+              name="descricao"
+              required
+              placeholder="Ex: Coca-Cola 350ml"
+            />
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label fw-bold">Preço *</label>
+            <div class="input-group">
+              <span class="input-group-text">R$</span>
+              <input
+                type="number"
+                step="0.01"
+                class="form-control"
+                [(ngModel)]="bebida.precoUnitario"
+                name="precoUnitario"
+                required
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label fw-bold">Açúcar</label>
+            <div class="form-check mt-2">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                [(ngModel)]="bebida.possuiAcucar"
+                name="possuiAcucar"
+                id="acucarCheck"
+              />
+              <label class="form-check-label" for="acucarCheck"> Possui Açúcar </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <button type="submit" class="btn btn-success me-2" [disabled]="!bebidaForm.form.valid">
+            <i class="bi bi-check-circle me-1"></i>
+            {{ modoEdicao ? 'Atualizar' : 'Salvar' }}
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="limparFormulario()">
+            <i class="bi bi-x-circle me-1"></i>
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Pesquisa -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Pesquisar Bebidas</label>
+          <div class="input-group">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Digite código ou descrição..."
+              [(ngModel)]="termoPesquisa"
+            />
+            <button
+              class="btn btn-outline-primary"
+              (click)="pesquisarBebidas()"
+              [disabled]="!termoPesquisa.trim()"
+            >
+              <i class="bi bi-search me-1"></i>
+              Pesquisar
+            </button>
+            <button class="btn btn-outline-secondary" (click)="carregarBebidas()">
+              <i class="bi bi-list-ul me-1"></i>
+              Todas
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de Bebidas -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">
+        Lista de Bebidas
+        <span class="badge bg-primary ms-2">{{ bebidas.length }}</span>
+      </h5>
+    </div>
+    <div class="card-body">
+      <div *ngIf="bebidas.length === 0" class="text-center py-4">
+        <div class="text-muted">
+          <i class="fs-1">🥤</i>
+          <p class="mt-2">Nenhuma bebida cadastrada</p>
+          <small>Use o formulário acima para cadastrar a primeira bebida</small>
+        </div>
+      </div>
+
+      <div *ngIf="bebidas.length > 0" class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-dark">
+            <tr>
+              <th>Código</th>
+              <th>Descrição</th>
+              <th>Preço</th>
+              <th>Açúcar</th>
+              <th width="150">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let bebida of bebidas">
+              <td class="fw-bold">{{ bebida.codigo }}</td>
+              <td>{{ bebida.descricao }}</td>
+              <td class="fw-bold text-success">R$ {{ bebida.precoUnitario.toFixed(2) }}</td>
+              <td>
+                <span
+                  class="badge"
+                  [ngClass]="bebida.possuiAcucar ? 'bg-warning text-dark' : 'bg-success'"
+                >
+                  {{ bebida.possuiAcucar ? 'Sim' : 'Não' }}
+                </span>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <button
+                    class="btn btn-outline-primary"
+                    (click)="editarBebida(bebida)"
+                    title="Editar"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button
+                    class="btn btn-outline-danger"
+                    (click)="excluirBebida(bebida.id!)"
+                    title="Excluir"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

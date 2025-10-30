@@ -1,0 +1,279 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="bi bi-burger text-warning me-2"></i>
+      Gerenciamento de Hamburgers
+    </h2>
+  </div>
+
+  <!-- Formulário -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-warning text-dark">
+      <h5 class="mb-0">
+        <i class="bi bi-plus-circle me-2"></i>
+        {{ modoEdicao ? 'Editar Hamburger' : 'Novo Hamburger' }}
+      </h5>
+    </div>
+    <div class="card-body">
+      <form (ngSubmit)="salvarHamburger()" #hamburgerForm="ngForm">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Código</label>
+            <input
+              type="text"
+              class="form-control bg-light"
+              [value]="hamburger.codigo"
+              readonly
+              style="cursor: not-allowed"
+            />
+            <small class="text-muted">Gerado automaticamente</small>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Descrição *</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="hamburger.descricao"
+              name="descricao"
+              required
+              placeholder="Ex: X-Burger Clássico"
+            />
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label fw-bold">Preço Total</label>
+            <div class="input-group">
+              <span class="input-group-text">R$</span>
+              <input
+                type="text"
+                class="form-control bg-light"
+                [value]="hamburger.valor.toFixed(2)"
+                readonly
+                style="cursor: not-allowed"
+              />
+            </div>
+            <small class="text-muted">Calculado automaticamente</small>
+          </div>
+        </div>
+
+        <!-- Seleção do Pão -->
+        <div class="mt-4">
+          <label class="form-label fw-bold">
+            Tipo de Pão *
+            <span *ngIf="hamburger.paoSelecionado" class="badge bg-success ms-2">
+              Selecionado: {{ hamburger.paoSelecionado.descricao }}
+            </span>
+            <span *ngIf="!hamburger.paoSelecionado" class="badge bg-danger ms-2">
+              Nenhum pão selecionado
+            </span>
+          </label>
+          <div class="row">
+            <div class="col-md-8">
+              <div class="border rounded p-3">
+                <div *ngFor="let pao of paesDisponiveis" class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    [id]="'pao-' + pao.id"
+                    [value]="pao.id"
+                    [checked]="hamburger.paoSelecionado?.id === pao.id"
+                    (change)="selecionarPao(pao)"
+                  />
+                  <label class="form-check-label" [for]="'pao-' + pao.id">
+                    {{ pao.descricao }}
+                    <small class="text-success">(R$ {{ pao.precoUnitario.toFixed(2) }})</small>
+                  </label>
+                </div>
+                <div *ngIf="paesDisponiveis.length === 0" class="text-muted">
+                  <small>Nenhum pão cadastrado. Cadastre ingredientes com "pão" no nome.</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Seleção de Ingredientes (sem pães) -->
+        <div class="mt-4">
+          <label class="form-label fw-bold">
+            Ingredientes Adicionais
+            <span class="badge bg-secondary ms-2">
+              {{ hamburger.ingredientes.length - (hamburger.paoSelecionado ? 1 : 0) }}
+              selecionado(s)
+            </span>
+          </label>
+          <div class="row">
+            <div class="col-md-8">
+              <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto">
+                <div *ngFor="let ingrediente of ingredientes" class="form-check">
+                  <input
+                    *ngIf="!isPao(ingrediente)"
+                    class="form-check-input"
+                    type="checkbox"
+                    [id]="'ingrediente-' + ingrediente.id"
+                    [checked]="isIngredienteSelecionado(ingrediente)"
+                    (change)="toggleIngrediente(ingrediente)"
+                  />
+                  <label
+                    *ngIf="!isPao(ingrediente)"
+                    class="form-check-label"
+                    [for]="'ingrediente-' + ingrediente.id"
+                  >
+                    {{ ingrediente.descricao }}
+                    <small class="text-success"
+                      >(R$ {{ ingrediente.precoUnitario.toFixed(2) }})</small
+                    >
+                  </label>
+                </div>
+                <div *ngIf="ingredientes.length === 0" class="text-muted">
+                  <small>Nenhum ingrediente cadastrado.</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resumo do Preço -->
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-header bg-light">
+                  <strong>Resumo do Preço</strong>
+                </div>
+                <div class="card-body">
+                  <div
+                    *ngIf="hamburger.paoSelecionado"
+                    class="d-flex justify-content-between small"
+                  >
+                    <span>{{ hamburger.paoSelecionado.descricao }}</span>
+                    <span>R$ {{ hamburger.paoSelecionado.precoUnitario.toFixed(2) }}</span>
+                  </div>
+                  <ng-container *ngFor="let ingrediente of hamburger.ingredientes">
+                    <div *ngIf="!isPao(ingrediente)" class="d-flex justify-content-between small">
+                      <span>{{ ingrediente.descricao }}</span>
+                      <span>R$ {{ ingrediente.precoUnitario.toFixed(2) }}</span>
+                    </div>
+                  </ng-container>
+                  <hr />
+                  <div class="d-flex justify-content-between fw-bold">
+                    <span>TOTAL:</span>
+                    <span class="text-success">R$ {{ hamburger.valor.toFixed(2) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <button
+            type="submit"
+            class="btn btn-warning me-2"
+            [disabled]="!hamburgerForm.form.valid || !hamburger.paoSelecionado"
+          >
+            <i class="bi bi-check-circle me-1"></i>
+            {{ modoEdicao ? 'Atualizar' : 'Salvar' }}
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="limparFormulario()">
+            <i class="bi bi-x-circle me-1"></i>
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Pesquisa -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Pesquisar Hamburgers</label>
+          <div class="input-group">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Digite código ou descrição..."
+              [(ngModel)]="termoPesquisa"
+            />
+            <button
+              class="btn btn-outline-warning"
+              (click)="pesquisarHamburgers()"
+              [disabled]="!termoPesquisa.trim()"
+            >
+              <i class="bi bi-search me-1"></i>
+              Pesquisar
+            </button>
+            <button class="btn btn-outline-secondary" (click)="carregarHamburgers()">
+              <i class="bi bi-list-ul me-1"></i>
+              Todos
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de Hamburgers -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">
+        <i class="bi bi-list-check me-2"></i>
+        Lista de Hamburgers
+        <span class="badge bg-warning text-dark ms-2">{{ hamburgers.length }}</span>
+      </h5>
+    </div>
+    <div class="card-body">
+      <div *ngIf="hamburgers.length === 0" class="text-center py-4">
+        <div class="text-muted">
+          <i class="bi bi-burger fs-1"></i>
+          <p class="mt-2">Nenhum hamburger cadastrado</p>
+          <small>Use o formulário acima para cadastrar o primeiro hamburger</small>
+        </div>
+      </div>
+
+      <div *ngIf="hamburgers.length > 0" class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-dark">
+            <tr>
+              <th>Código</th>
+              <th>Descrição</th>
+              <th>Preço</th>
+              <th>Ingredientes</th>
+              <th width="150">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let hamburger of hamburgers">
+              <td class="fw-bold">{{ hamburger.codigo }}</td>
+              <td>{{ hamburger.descricao }}</td>
+              <td class="fw-bold text-success">R$ {{ hamburger.valor.toFixed(2) }}</td>
+              <td>
+                <small>
+                  <span *ngFor="let ingrediente of hamburger.ingredientes; let last = last">
+                    {{ ingrediente.descricao }}{{ !last ? ', ' : '' }}
+                  </span>
+                </small>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <button
+                    class="btn btn-outline-primary"
+                    (click)="editarHamburger(hamburger)"
+                    title="Editar"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button
+                    class="btn btn-outline-danger"
+                    (click)="excluirHamburger(hamburger.id!)"
+                    title="Excluir"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
